@@ -11,3 +11,8 @@ COPY target/*.war /usr/local/tomcat/webapps/ROOT.war
 # Step 4: Expose port 8000 (default Tomcat port is 8080, change it to 8000)
 EXPOSE 8000
 
+# Step 5: Change Tomcat's server.xml to use port 8000 instead of 8080
+RUN sed -i 's/8080/8000/g' /usr/local/tomcat/conf/server.xml
+
+# Step 6: Start Tomcat when the container runs
+CMD ["catalina.sh", "run"]
