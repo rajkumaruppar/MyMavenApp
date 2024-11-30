@@ -1,18 +1,30 @@
-# Step 1: Use the official Tomcat image from Docker Hub
+# Step 1: Use an official Maven image to build the application
+FROM maven:3.9.9-openjdk-11-slim AS build
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Step 2: Copy the pom.xml and the source code to the container
+COPY pom.xml ./
+COPY src ./src
+
+# Step 3: Build the project with Maven (it will generate a WAR or JAR file in the target folder)
+RUN mvn clean package -DskipTests
+
+# Step 4: Use the official Tomcat image as the base for running the application
 FROM tomcat:9-jdk11-openjdk
 
-# Step 2: Set the working directory
+# Step 5: Set the working directory for Tomcat
 WORKDIR /usr/local/tomcat/webapps
 
-# Step 3: Copy the WAR file into the Tomcat webapps folder
-# Replace 'target/myapp.war' with the actual path to your WAR file
-COPY target/*.war /usr/local/tomcat/webapps/ROOT.war
+# Step 6: Copy the WAR file (generated in the build stage) to Tomcat's webapps folder
+COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/ROOT.war
 
-# Step 4: Expose port 8000 (default Tomcat port is 8080, change it to 8000)
+# Step 7: Expose port 8000 (Tomcat default port will be changed to 8000 as per previous step)
 EXPOSE 8000
 
-# Step 5: Change Tomcat's server.xml to use port 8000 instead of 8080
+# Step 8: Update Tomcat's server.xml to use port 8000 instead of the default 8080
 RUN sed -i 's/8080/8000/g' /usr/local/tomcat/conf/server.xml
 
-# Step 6: Start Tomcat when the container runs
+# Step 9: Start Tomcat when the container is run
 CMD ["catalina.sh", "run"]
